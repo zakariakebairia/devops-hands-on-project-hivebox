@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,16 +10,13 @@ import (
 )
 
 const (
-	VERSION   = "v0.0.4"
-	APIURL    = "https://api.opensensemap.org"
-	BOXAPIURL = "https://api.opensensemap.org/boxes"
+	VERSION = "v0.0.4"
+	APIURL  = "https://api.opensensemap.org"
 )
 
 // var client = &http.Client{Timeout: 15 * time.Second}
 
-// ═══════════════════════════════════════════════════════════════════════
 // Box struct
-// ═══════════════════════════════════════════════════════════════════════
 type Box struct {
 	ID              string            `json:"_id"`
 	Name            string            `json:"name"`
@@ -49,40 +45,34 @@ type Measurement struct {
 	Value     string    `json:"value"`
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// GetBox function
-// ═══════════════════════════════════════════════════════════════════════
-
-// senseBox IDs
-// ------------
-// 5eba5fbad46fb8001b799786
-// 5c21ff8f919bf8001adf2488
-// 5ade1acf223bd80019a1011c
-// json format with an ID
-// ----------------------
+// FetchBoxData function
 // https://api.opensensemap.org/boxes/57000b8745fd40c8196ad04c?format=json
-func GetData(id string) (*Box, error) {
-	response, err := http.Get(APIURL + "/boxes/" + id)
+func FetchBoxData(id string) (*Box, error) {
 	// response, err := client.Get(BOXAPIURL + "/" + id)
+	response, err := http.Get(APIURL + "/boxes/" + id)
 	if err != nil {
 		return nil, fmt.Errorf("fetching box %q: %w", id, err)
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("box %s: API returned %d", id, response.StatusCode)
+	}
+
 	var box Box
 	if err := json.NewDecoder(response.Body).Decode(&box); err != nil {
 		return nil, fmt.Errorf("decoding box %q: %w", id, err)
 	}
-	fmt.Printf("\n📦 Box name: %q, ID (%s)\n", box.Name, box.ID)
+	fmt.Printf("📦 Box name: %q, ID (%s)\n", box.Name, box.ID)
 	return &box, nil
 }
 
-func GetAllData(ids []string) ([]*Box, error) {
+func FetchBoxesData(ids []string) ([]*Box, error) {
 	var boxes []*Box
 	for _, id := range ids {
-		box, err := GetData(id)
+		box, err := FetchBoxData(id)
 		if err != nil {
-			log.Fatal(err)
+			return nil, fmt.Errorf("getting box %s: %w", id, err)
 		}
 		boxes = append(boxes, box)
 	}
@@ -104,29 +94,33 @@ func average(nums []float64) (float64, error) {
 	return sum / float64(len(nums)), nil
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// GetTemperature function
-// ═══════════════════════════════════════════════════════════════════════
+// GetAverageTemperature function
 // // Get the current temperature, and ensure that all data is no older than 1 hour
 // IDEA: the right way to do this is
 // Get all boxes -> filter them based on temperature -> get the average value for the temperature
-func GetAverageTemperature(box Box) (float64, error) {
+// Best way is , get all data for boxes (ids)
+// -> filter only data for temperature (C)
+// -> Get values not older than 1 hour
+// -> Calculate the average
+func GetAverageTemperature(boxes []*Box) (float64, error) {
 	var temps []float64
-	for _, sensor := range box.Sensors {
-		if !strings.Contains(sensor.Unit, "°C") {
-			continue
+	for _, box := range boxes {
+		for _, sensor := range box.Sensors {
+			if !strings.Contains(sensor.Unit, "°C") {
+				continue
+			}
+			if sensor.LastMeasurement == nil {
+				continue
+			}
+			if !isLastHour(sensor.LastMeasurement.CreatedAt) {
+				continue
+			}
+			value, err := strconv.ParseFloat(sensor.LastMeasurement.Value, 64)
+			if err != nil {
+				continue
+			}
+			temps = append(temps, value)
 		}
-		if sensor.LastMeasurement == nil {
-			continue
-		}
-		if !isLastHour(sensor.LastMeasurement.CreatedAt) {
-			continue
-		}
-		value, err := strconv.ParseFloat(sensor.LastMeasurement.Value, 64)
-		if err != nil {
-			continue
-		}
-		temps = append(temps, value)
 	}
 	if len(temps) == 0 {
 		return 0, fmt.Errorf("no temperature readings in the last hour")
@@ -135,10 +129,10 @@ func GetAverageTemperature(box Box) (float64, error) {
 	// --------remove later------------
 	temperature, err := average(temps)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("getting avg temperature: %w", err)
 	}
 
-	fmt.Printf("\ntemps: %v, average: %.2f\n", temps, temperature)
-	// --------remove later------------
-	return average(temps)
+	fmt.Printf("\n🌡️ temps: %v, Average temperature: %.2f °C\n", temps, temperature)
+	// return average(temps)
+	return temperature, nil
 }
