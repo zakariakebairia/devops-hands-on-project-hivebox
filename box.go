@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	VERSION   = "v1.0.0"
+	VERSION   = "v0.0.4"
 	APIURL    = "https://api.opensensemap.org"
 	BOXAPIURL = "https://api.opensensemap.org/boxes"
 )
@@ -43,7 +43,6 @@ type Sensor struct {
 	Unit            string       `json:"unit"` // Temperature, Humidity, PM2.5
 	SensorType      string       `json:"sensorType"`
 	LastMeasurement *Measurement `json:"lastMeasurement"`
-	// Measurements    map[string]time.Time `json:"measurements"` // [value]: date
 }
 type Measurement struct {
 	CreatedAt time.Time `json:"createdAt"`
@@ -63,7 +62,7 @@ type Measurement struct {
 // ----------------------
 // https://api.opensensemap.org/boxes/57000b8745fd40c8196ad04c?format=json
 func GetData(id string) (*Box, error) {
-	response, err := http.Get(BOXAPIURL + "/" + id)
+	response, err := http.Get(APIURL + "/boxes/" + id)
 	// response, err := client.Get(BOXAPIURL + "/" + id)
 	if err != nil {
 		return nil, fmt.Errorf("fetching box %q: %w", id, err)
@@ -90,6 +89,10 @@ func GetAllData(ids []string) ([]*Box, error) {
 	return boxes, nil
 }
 
+func isLastHour(t time.Time) bool {
+	return t.After(time.Now().Add(-1 * time.Hour))
+}
+
 func average(nums []float64) (float64, error) {
 	if len(nums) == 0 {
 		return 0, fmt.Errorf("cannot average empty slice")
@@ -104,22 +107,38 @@ func average(nums []float64) (float64, error) {
 // ═══════════════════════════════════════════════════════════════════════
 // GetTemperature function
 // ═══════════════════════════════════════════════════════════════════════
-// Get the current temperature, and ensure that all data is no older than 1 hour
-// TODO: data no older than 1 hour
-func GetAverageTemperature(box Box) float64 {
-	temps := []float64{}
+// // Get the current temperature, and ensure that all data is no older than 1 hour
+// IDEA: the right way to do this is
+// Get all boxes -> filter them based on temperature -> get the average value for the temperature
+func GetAverageTemperature(box Box) (float64, error) {
+	var temps []float64
 	for _, sensor := range box.Sensors {
-		if strings.Contains(sensor.Unit, "°C") {
-			value, err := strconv.ParseFloat(sensor.LastMeasurement.Value, 64)
-			if err != nil {
-				log.Fatal(err)
-			}
-			temps = append(temps, value)
+		if !strings.Contains(sensor.Unit, "°C") {
+			continue
 		}
+		if sensor.LastMeasurement == nil {
+			continue
+		}
+		if !isLastHour(sensor.LastMeasurement.CreatedAt) {
+			continue
+		}
+		value, err := strconv.ParseFloat(sensor.LastMeasurement.Value, 64)
+		if err != nil {
+			continue
+		}
+		temps = append(temps, value)
 	}
-	temperature, _ := average(temps)
+	if len(temps) == 0 {
+		return 0, fmt.Errorf("no temperature readings in the last hour")
+	}
 
-	fmt.Printf("\n%.2f, average: %.2f", temps, temperature)
+	// --------remove later------------
+	temperature, err := average(temps)
+	if err != nil {
+		return 0, err
+	}
 
-	return temperature
+	fmt.Printf("\ntemps: %v, average: %.2f\n", temps, temperature)
+	// --------remove later------------
+	return average(temps)
 }
