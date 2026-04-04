@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	VERSION = "v0.0.4"
+	VERSION = "v0.0.5"
 	APIURL  = "https://api.opensensemap.org"
 )
 
