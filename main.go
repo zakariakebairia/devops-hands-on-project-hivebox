@@ -12,11 +12,12 @@ func main() {
 		"5c21ff8f919bf8001adf2488",
 		"5ade1acf223bd80019a1011c",
 	}
-
+	// version endpoint
 	http.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, VERSION)
 	})
 
+	// temperature endpoint
 	http.HandleFunc("/temperature", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 

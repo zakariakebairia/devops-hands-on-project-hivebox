@@ -79,10 +79,13 @@ func FetchBoxesData(ids []string) ([]*Box, error) {
 	return boxes, nil
 }
 
+// isLastHour check if the last time given (t) is no older than
+// one hour ago
 func isLastHour(t time.Time) bool {
 	return t.After(time.Now().Add(-1 * time.Hour))
 }
 
+// average calculate the average of numbers in nums
 func average(nums []float64) (float64, error) {
 	if len(nums) == 0 {
 		return 0, fmt.Errorf("cannot average empty slice")
@@ -94,14 +97,8 @@ func average(nums []float64) (float64, error) {
 	return sum / float64(len(nums)), nil
 }
 
-// GetAverageTemperature function
-// // Get the current temperature, and ensure that all data is no older than 1 hour
-// IDEA: the right way to do this is
-// Get all boxes -> filter them based on temperature -> get the average value for the temperature
-// Best way is , get all data for boxes (ids)
-// -> filter only data for temperature (C)
-// -> Get values not older than 1 hour
-// -> Calculate the average
+// GetAverageTemperature
+// Get the current temperature, and ensure that all data is no older than 1 hour
 func GetAverageTemperature(boxes []*Box) (float64, error) {
 	var temps []float64
 	for _, box := range boxes {
@@ -126,7 +123,6 @@ func GetAverageTemperature(boxes []*Box) (float64, error) {
 		return 0, fmt.Errorf("no temperature readings in the last hour")
 	}
 
-	// --------remove later------------
 	temperature, err := average(temps)
 	if err != nil {
 		return 0, fmt.Errorf("getting avg temperature: %w", err)
