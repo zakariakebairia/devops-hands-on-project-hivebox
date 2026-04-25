@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	VERSION = "v0.0.5"
-	APIURL  = "https://api.opensensemap.org"
+	APIURL = "https://api.opensensemap.org"
 )
 
 // var client = &http.Client{Timeout: 15 * time.Second}
