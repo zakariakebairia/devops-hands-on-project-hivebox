@@ -21,6 +21,12 @@ test:
 	@echo "Testing $(BINARY_NAME)..."
 	$(BINARY_PATH) run main.go
 
+dockerize:
+	@echo "Building image for $(PROJECT_NAME)"
+	docker build -t $(PROJECT_NAME):$(VERSION) .
+drun:
+	docker run -p 8080:8080 $(PROJECT_NAME):$(VERSION)
+
 clean:
 	@echo "Cleaning up..."
 	rm -f $(BINARY_NAME)
