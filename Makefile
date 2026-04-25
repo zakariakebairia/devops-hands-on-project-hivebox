@@ -2,12 +2,12 @@
 
 # BINARY_NAME sets the name of the output executable.
 BINARY_NAME = hivebox
+PROJECT_NAME = hivebox
 BINARY_PATH = /usr/local/go/bin/go
-PROJECT := github.com/zakariakebairia/devops-hands-on-project-hivebox
 VERSION ?= $(shell git describe --tags --always)
 
 
-LDFLAGS := -X $(PROJECT)/main.Version=$(VERSION)
+LDFLAGS := -X main.Version=$(VERSION)
 
 # The default target: when you run "make" without arguments, it will run the "build" target.
 all: build
