@@ -3,6 +3,8 @@
 [![Telegram Group](https://img.shields.io/badge/Telegram_Group-%232ca5e0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/DevOpsHive/985)
 [![Fork on GitHub](https://img.shields.io/badge/Fork_On_GitHub-%2336465D?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DevOpsHiveHQ/devops-hands-on-project-hivebox/fork)
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/zakariakebairia/devops-hands-on-project-hivebox/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
+
 # HiveBox - DevOps End-to-End Hands-On Project
 
 <p align="center">
