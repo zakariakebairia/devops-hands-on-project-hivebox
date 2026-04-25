@@ -6,6 +6,9 @@ import (
 	"net/http"
 )
 
+// IDEA: I need to use env vars to store
+// the result of `git describe --tags --always`
+// and pass it to docker during build
 var Version = "None"
 
 func main() {
