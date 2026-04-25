@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+var Version = "None"
+
 func main() {
 	ids := []string{
 		"5eba5fbad46fb8001b799786",
@@ -14,7 +16,7 @@ func main() {
 	}
 	// version endpoint
 	http.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, VERSION)
+		fmt.Fprint(w, Version)
 	})
 
 	// temperature endpoint
